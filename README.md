@@ -22,7 +22,7 @@ Sequelize is a JavaScript Object Relational Mapping tool! Its an abstraction lay
 Great, but how do we use Sequelize? Let's start by installing the [Sequelize Client](https://github.com/sequelize/cli):
 
 ```sh
-cd sequelize
+cd sequelize-practice
 npm init -y
 npm install sequelize pg
 npm install --save-dev sequelize-cli
@@ -38,26 +38,25 @@ code .
 
 Let's configure our Sequelize project to work with Postgres:
 
-sequelize/config/config.json
+sequelize-practice/config/config.json
 ```js
 {
   "development": {
-    "database": "sequelize_development",
+    "database": "sequelize_practice_development",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "test": {
-    "database": "sequelize_test",
+    "database": "sequelize_practice_test",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "production": {
-    "database": "sequelize_production",
+    "database": "sequelize_practice_production",
     "host": "127.0.0.1",
     "dialect": "postgres"
   }
 }
-
 ```
 
 Cool, now create the Postgres database:
@@ -69,7 +68,7 @@ npx sequelize-cli db:create
 Next we will create a User model:
 
 ```sh
-npx sequelize-cli model:generate --name User --attributes firstName:string,lastName:string,email:string,password:string
+npx sequelize-cli model:generate --name User --attributes firstName:string,lastName:string,email:string,userName:string,password:string,jobTitle:string
 ```
 
 Below is the User model and an associated migration that will be created from the above command: 
@@ -77,13 +76,14 @@ Below is the User model and an associated migration that will be created from th
 sequelize/models/user.js
 
 ```js
-'use strict';
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     firstName: DataTypes.STRING,
     lastName: DataTypes.STRING,
     email: DataTypes.STRING,
+    userName: DataTypes.STRING,
     password: DataTypes.STRING,
+    jobTitle: DataTypes.STRING
   }, {});
   User.associate = function(models) {
     // associations can be defined here
@@ -95,7 +95,6 @@ module.exports = (sequelize, DataTypes) => {
 sequelize/migrations/20190914184520-create-user.js
 
 ```js
-'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('Users', {
@@ -114,7 +113,13 @@ module.exports = {
       email: {
         type: Sequelize.STRING
       },
+      userName: {
+        type: Sequelize.STRING
+      },
       password: {
+        type: Sequelize.STRING
+      },
+      jobTitle: {
         type: Sequelize.STRING
       },
       createdAt: {
@@ -144,22 +149,36 @@ npx sequelize-cli db:migrate
 Now let's create a seed file:
 
 ```sh
-npx sequelize-cli seed:generate --name user
+npx sequelize-cli seed:generate --name users
 ```
 
-Let's edit the file sequelize/seeders/20190904165805-user.js
+We are going to user an npm package called [faker](https://www.npmjs.com/package/faker) to generate fake information to populate our database!
+
+```sh
+npm install faker
+```
+
+Let's edit the file sequelize/seeders/20190904165805-users.js
 
 ```js
+const faker = require('faker');
+
+const users = [...Array(100)].map((user) => (
+  {
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName(),
+    email: faker.internet.email(),
+    userName: faker.internet.userName(),
+    password: faker.internet.password(8),
+    jobTitle: faker.name.jobTitle(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+))
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.bulkInsert('Users', [{
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'demo@demo.com',
-        password: '$321!pass!123$',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }], {});
+    return queryInterface.bulkInsert('Users', users, {});
   },
 
   down: (queryInterface, Sequelize) => {
@@ -179,7 +198,7 @@ npx sequelize-cli db:seed:all
 Drop into psql and query the database for the demo user:
 
 ```sh
-psql sequelize_development
+psql sequelize_practice_development
 SELECT * FROM "Users";
 ```
 
