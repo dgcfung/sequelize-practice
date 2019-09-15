@@ -14,6 +14,7 @@ const users = [...Array(100)].map((user) => (
 ))
 
 // Will do the same as above. This is simpler for loop version.
+// const users = []
 // for(let i = 0; i < 100; i++) {
 //   users.push({
 //     firstName: faker.name.firstName(),
